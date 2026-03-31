@@ -1,1 +1,9 @@
 HYRunByRunMerging/
+*.log
+*.cc
+*.d
+*.so
+*.pcm
+*.pdf
+*.root
+
