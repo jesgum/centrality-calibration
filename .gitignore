@@ -1,9 +1,13 @@
-HYRunByRunMerging/
 *.log
-*.cc
 *.d
 *.so
 *.pcm
 *.pdf
 *.root
+!basehistos.root
 
+*.txt
+!directories.txt
+!runNumbers.txt
+
+jobLock*
