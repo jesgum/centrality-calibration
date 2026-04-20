@@ -41,7 +41,7 @@ def download_file(run_path, run_num):
     Returns (run_num, success, error).
     """
     alien_path = f"{run_path}/AnalysisResults.root"
-    local_file = f"results/AR_{run_num}.root"
+    local_file = f"ARs/AR_{run_num}.root"
     cmd = ["alien_cp", "-q", alien_path, f"file:{local_file}"]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
@@ -65,7 +65,7 @@ def manual_merge(run_path, run_num):
 
     Returns (run_num, success, error).
     """
-    tmp_dir = f"results/tmp_{run_num}"
+    tmp_dir = f"ARs/tmp_{run_num}"
     os.makedirs(tmp_dir, exist_ok=True)
 
     try:
@@ -113,7 +113,7 @@ def manual_merge(run_path, run_num):
             )
 
         # --- Step 3: merge with hadd ---
-        output_file = f"results/AR_{run_num}.root"
+        output_file = f"ARs/AR_{run_num}.root"
         hadd_cmd = ["hadd", "-f", output_file] + downloaded
         try:
             hadd_result = subprocess.run(
