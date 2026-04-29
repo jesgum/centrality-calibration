@@ -21,7 +21,7 @@ for FILE in "${RUN_NUMBERS[@]}"; do
   # screen -d -m ./runOneAnalysis.sh ${FILE} hFT0C_BCs 0
   # screen -d -m ./runOneAnalysis.sh ${FILE} hFT0C_BCs 2
 #  screen -d -m -L -Logfile logs/log_analysis_${FILE}_FT0C_0.txt ./runOneAnalysis.sh ${FILE} hFT0C_BCs 0
- screen -d -m -L -Logfile logs/log_analysis_${FILE}_FT0C_2.txt ./runOneAnalysis.sh ${FILE} hFT0C_BCs 2
+ screen -d -m -L -Logfile logs/log_analysis_${FILE}_FT0C_2.txt ./../scripts/runOneAnalysis.sh ${FILE} hFT0C_BCs 2
 #  screen -d -m -L -Logfile logs/log_analysis_${FILE}_FT0M_2.txt ./runOneAnalysis.sh ${FILE} hFT0M_BCs 2
 #  screen -d -m -L -Logfile logs/log_analysis_${FILE}_FV0A_2.txt ./runOneAnalysis.sh ${FILE} hFV0A_BCs 2
 #  screen -d -m -L -Logfile logs/log_analysis_${FILE}_NMFTTracks_2.txt ./runOneAnalysis.sh ${FILE} hNMFTTracks 2
