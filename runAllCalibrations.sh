@@ -23,6 +23,6 @@ for FILE in ${FILES}; do
     EST="$HISTTYPE"
   fi
 
-  root.exe -q -b runCalibration.C\(\"${FILE}\"\)
-  root.exe -q -b "DrawSummaryPlots04.C(\"${FILE}\",\"${RUN}\",\"${EST}\")"
+  root.exe -q -b runCalibration.cc\(\"${FILE}\"\)
+  root.exe -q -b "drawSummaryPlots.cc(\"${FILE}\",\"${RUN}\",\"${EST}\")"
 done
