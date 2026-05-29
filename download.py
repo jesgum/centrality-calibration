@@ -3,11 +3,26 @@ import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# --- Which files to download ---
+DOWNLOAD_ANALYSIS_RESULTS = False   # AnalysisResults.root
+DOWNLOAD_AO2D             = True   # AO2D.root
+
 DIRECTORIES_FILE = "directories.txt"
 RUN_NUMBERS_FILE = "runNumbers.txt"
 DUMMY_DIR = "RAW_COPY_FROM_HY_SUBMITTED_JOBS_OUTPUT_DIRECTORY"
 DUMMY_RUN = "RAW_COPY_FROM_HY_SUBMITTED_JOBS_RUN_NO"
 TRY_MANUAL_MERGE_ON_FAILURE = True
+
+# Derived list of (filename, tag, output_folder) triples for the enabled targets.
+#   filename      — name on AliEn
+#   tag           — prefix for local files, e.g. AR_<run>.root / AO2D_<run>.root
+#   output_folder — local directory to download into
+_TARGETS: list[tuple[str, str, str]] = []
+if DOWNLOAD_ANALYSIS_RESULTS:
+    _TARGETS.append(("AnalysisResults.root", "AR",   "ARs"))
+
+if DOWNLOAD_AO2D:
+    _TARGETS.append(("AO2D.root",            "AO2D", "AO2Ds"))
 
 
 def parse_file(filepath):
@@ -35,37 +50,38 @@ def download_single(alien_path, local_path):
     return False, result.stderr.strip()
 
 
-def download_file(run_path, run_num):
+def download_file(run_path, run_num, filename, tag, folder):
     """
-    Primary download attempt: grab AnalysisResults.root directly from the run path.
-    Returns (run_num, success, error).
+    Primary download attempt: grab `filename` directly from the run path.
+    Returns (run_num, tag, folder, success, error).
     """
-    alien_path = f"{run_path}/AnalysisResults.root"
-    local_file = f"ARs/AR_{run_num}.root"
-    cmd = ["alien_cp", "-q", alien_path, f"file:{local_file}"]
+    alien_path = f"{run_path}/{filename}"
+    local_file = f"{folder}/{tag}_{run_num}.root"
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(
+            ["alien_cp", "-q", alien_path, f"file:{local_file}"],
+            capture_output=True, text=True, timeout=300,
+        )
         if result.returncode == 0:
-            return (run_num, True, None)
-        else:
-            return (run_num, False, result.stderr.strip())
+            return (run_num, tag, folder, True, None)
+        return (run_num, tag, folder, False, result.stderr.strip())
     except subprocess.TimeoutExpired:
-        return (run_num, False, "Timeout after 300s")
+        return (run_num, tag, folder, False, "Timeout after 300s")
     except Exception as e:
-        return (run_num, False, str(e))
+        return (run_num, tag, folder, False, str(e))
 
 
-def manual_merge(run_path, run_num):
+def manual_merge(run_path, run_num, filename, tag, folder):
     """
     Fallback merge strategy:
       1. alien_ls the run path to find sub-job directories.
-      2. For each sub-job directory, download its AnalysisResults.root into a
-         temporary local folder with a unique filename.
+      2. For each sub-job directory, download its `filename` into a
+         temporary local folder with a unique name.
       3. Merge all downloaded files with `hadd` into the final output file.
 
-    Returns (run_num, success, error).
+    Returns (run_num, tag, folder, success, error).
     """
-    tmp_dir = f"ARs/tmp_{run_num}"
+    tmp_dir = f"{folder}/tmp_{tag}_{run_num}"
     os.makedirs(tmp_dir, exist_ok=True)
 
     try:
@@ -73,20 +89,19 @@ def manual_merge(run_path, run_num):
         try:
             subdirs = alien_ls(run_path)
         except Exception as e:
-            return (run_num, False, f"alien_ls failed: {e}")
+            return (run_num, tag, folder, False, f"alien_ls failed: {e}")
 
         if not subdirs:
-            return (run_num, False, "alien_ls returned no subdirectories")
+            return (run_num, tag, folder, False, "alien_ls returned no subdirectories")
 
-        # --- Step 2: download each sub-job's AnalysisResults.root ---
+        # --- Step 2: download each sub-job's file ---
         downloaded = []
         download_errors = []
 
         for subdir in subdirs:
-            alien_file = f"{run_path}/{subdir}/AnalysisResults.root"
-            # Sanitise the subdir name so it's safe as a filename component
+            alien_file = f"{run_path}/{subdir}/{filename}"
             safe_name = subdir.replace("/", "_").strip("_") or "job"
-            local_file = os.path.join(tmp_dir, f"AR_{run_num}_{safe_name}.root")
+            local_file = os.path.join(tmp_dir, f"{tag}_{run_num}_{safe_name}.root")
 
             try:
                 ok, err = download_single(alien_file, local_file)
@@ -101,57 +116,59 @@ def manual_merge(run_path, run_num):
 
         if not downloaded:
             return (
-                run_num,
-                False,
+                run_num, tag, folder, False,
                 f"No sub-job files downloaded. Errors: {'; '.join(download_errors)}",
             )
 
         if download_errors:
             print(
-                f"   [merge {run_num}] {len(downloaded)} files downloaded, "
+                f"   [merge {tag} {run_num}] {len(downloaded)} files downloaded, "
                 f"{len(download_errors)} sub-jobs failed: {'; '.join(download_errors)}"
             )
 
         # --- Step 3: merge with hadd ---
-        output_file = f"ARs/AR_{run_num}.root"
+        output_file = f"{folder}/{tag}_{run_num}.root"
         hadd_cmd = ["hadd", "-f", output_file] + downloaded
         try:
             hadd_result = subprocess.run(
                 hadd_cmd, capture_output=True, text=True, timeout=600
             )
             if hadd_result.returncode != 0:
-                return (
-                    run_num,
-                    False,
-                    f"hadd failed: {hadd_result.stderr.strip()}",
-                )
+                return (run_num, tag, folder, False, f"hadd failed: {hadd_result.stderr.strip()}")
         except subprocess.TimeoutExpired:
-            return (run_num, False, "hadd timed out after 600s")
+            return (run_num, tag, folder, False, "hadd timed out after 600s")
         except FileNotFoundError:
-            return (run_num, False, "hadd not found — is ROOT available in PATH?")
+            return (run_num, tag, folder, False, "hadd not found — is ROOT available in PATH?")
 
-        return (run_num, True, None)
+        return (run_num, tag, folder, True, None)
 
     finally:
-        # Always clean up the temporary directory
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-def download_or_merge(run_path, run_num):
+def download_or_merge(run_path, run_num, filename, tag, folder):
     """
     Try the direct download first. If it fails and TRY_MANUAL_MERGE_ON_FAILURE
     is set, fall back to the sub-job merge strategy.
     """
-    run_num, success, error = download_file(run_path, run_num)
+    run_num, tag, folder, success, error = download_file(run_path, run_num, filename, tag, folder)
 
     if success or not TRY_MANUAL_MERGE_ON_FAILURE:
-        return run_num, success, error
+        return run_num, tag, folder, success, error
 
-    print(f"   [fallback] Direct download failed for {run_num}: {error}. Trying manual merge...")
-    return manual_merge(run_path, run_num)
+    print(
+        f"   [fallback] Direct download failed for {tag}_{run_num}: {error}. "
+        "Trying manual merge..."
+    )
+    return manual_merge(run_path, run_num, filename, tag, folder)
 
 
 if __name__ == "__main__":
+    if not _TARGETS:
+        print("Error: both DOWNLOAD_ANALYSIS_RESULTS and DOWNLOAD_AO2D are False. "
+              "Nothing to do.")
+        exit(1)
+
     runlist = parse_file(DIRECTORIES_FILE)
     run_numbers = parse_file(RUN_NUMBERS_FILE)
 
@@ -175,24 +192,31 @@ if __name__ == "__main__":
         )
         exit(1)
 
-    os.makedirs("results", exist_ok=True)
-    print(f"Found {len(runlist)} runs to download.\n")
+    for _, _, folder in _TARGETS:
+        os.makedirs(folder, exist_ok=True)
+
+    target_desc = " + ".join(f for f, _, _ in _TARGETS)
+    total_jobs = len(runlist) * len(_TARGETS)
+    print(f"Downloading {target_desc} for {len(runlist)} runs "
+          f"({total_jobs} total files).\n")
 
     failed = []
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = {
-            executor.submit(download_or_merge, path, run_num): run_num
+            executor.submit(download_or_merge, path, run_num, filename, tag, folder): (run_num, tag)
             for path, run_num in zip(runlist, run_numbers)
+            for filename, tag, folder in _TARGETS
         }
 
         for future in as_completed(futures):
-            run_num, success, error = future.result()
+            run_num, tag, folder, success, error = future.result()
+            local_name = f"{folder}/{tag}_{run_num}.root"
             if success:
-                print(f" ✓ AR_{run_num}.root")
+                print(f" ✓ {local_name}")
             else:
-                print(f" ✗ AR_{run_num}.root  —  {error}")
-                failed.append(run_num)
+                print(f" ✗ {local_name}  —  {error}")
+                failed.append(local_name)
 
-    print(f"\nDone. {len(runlist) - len(failed)}/{len(runlist)} succeeded.")
+    print(f"\nDone. {total_jobs - len(failed)}/{total_jobs} succeeded.")
     if failed:
-        print(f"Failed runs: {failed}")
+        print(f"Failed files: {failed}")
