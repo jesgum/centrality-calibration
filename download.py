@@ -3,6 +3,9 @@ import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# --- Number of jobs ---
+MAX_WORKERS = 8
+
 # --- Which files to download ---
 DOWNLOAD_ANALYSIS_RESULTS = True   # AnalysisResults.root
 DOWNLOAD_AO2D             = True   # AO2D.root
@@ -140,7 +143,7 @@ if __name__ == "__main__":
 
     failed = []
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
 
         # ── Phase 1: submit all direct-download jobs ──────────────────────────
         # future → (run_path, run_num, filename, tag, folder)
