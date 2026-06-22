@@ -149,7 +149,7 @@ int runGlauFit(TString lInputFileName = "AnalysisResultsLHC24ar.root", Double_t 
   if(!file) cout<<"Problem with file!"<<endl;
   TH1F *hV0Mfine = 0x0; 
 
-  hV0Mfine = (TH1F *) file -> Get(Form("centrality-study/%s", histogramName.Data()));
+  hV0Mfine = (TH1F *) file -> Get(Form("centrality-study_bc_vtxZ/%s", histogramName.Data()));
 
   // disregard bin zero
   cout<<"Received bin zero content: "<< hV0Mfine ->GetBinContent(0)<<", will set to zero..."<<endl; 
@@ -247,7 +247,7 @@ int runGlauFit(TString lInputFileName = "AnalysisResultsLHC24ar.root", Double_t 
   g->SetAncestorMode(ancestorMode);
   
   //Step 1: open the (Npart, Ncoll) pair information, provide
-  TFile *fbasefile = new TFile("basehistos.root","READ");
+  TFile *fbasefile = new TFile("../basehistos.root","READ");
   TH2D *hNpNc = (TH2D*) fbasefile->Get("hNpNc");
   
   if(!hNpNc){
