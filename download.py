@@ -9,7 +9,7 @@ TIMEOUT = 600     # Timeout in seconds
 
 # --- Which files to download ---
 DOWNLOAD_ANALYSIS_RESULTS = True   # AnalysisResults.root
-DOWNLOAD_AO2D             = True   # AO2D.root
+DOWNLOAD_AO2D             = False   # AO2D.root
 
 DIRECTORIES_FILE = "directories.txt"
 RUN_NUMBERS_FILE = "runNumbers.txt"
