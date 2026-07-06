@@ -3,8 +3,9 @@ import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# --- Number of jobs ---
-MAX_WORKERS = 8
+# --- Download settings ---
+MAX_WORKERS = 16  # Number of jobs
+TIMEOUT = 600     # Timeout in seconds
 
 # --- Which files to download ---
 DOWNLOAD_ANALYSIS_RESULTS = True   # AnalysisResults.root
@@ -45,7 +46,7 @@ def download_single(alien_path, local_path):
     """Download one file from AliEn. Returns (success, error_message)."""
     result = subprocess.run(
         ["alien_cp", "-q", alien_path, f"file:{local_path}"],
-        capture_output=True, text=True, timeout=300,
+        capture_output=True, text=True, timeout=TIMEOUT,
     )
     if result.returncode == 0:
         return True, None
@@ -62,13 +63,13 @@ def download_file(run_path, run_num, filename, tag, folder):
     try:
         result = subprocess.run(
             ["alien_cp", "-q", alien_path, f"file:{local_file}"],
-            capture_output=True, text=True, timeout=300,
+            capture_output=True, text=True, timeout=TIMEOUT,
         )
         if result.returncode == 0:
             return True, None
         return False, result.stderr.strip()
     except subprocess.TimeoutExpired:
-        return False, "Timeout after 300s"
+        return False, "Timeout after {TIMEOUT}s"
     except Exception as e:
         return False, str(e)
 
