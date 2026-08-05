@@ -10,6 +10,7 @@ FILES=$(ls ../results/*.root)
 
 RUN="111111"
 EST="FT0A Amplitude"
+ANCHOR=80
 
 for FILE in ${FILES}; do
   echo "Processing file ${FILE}"
@@ -23,6 +24,6 @@ for FILE in ${FILES}; do
     EST="$HISTTYPE"
   fi
 
-  root.exe -q -b ../macros/runCalibration.cc\(\"${FILE}\"\)
-  root.exe -q -b ../macros/drawSummaryPlots.cc(\"${FILE}\",\"${RUN}\",\"${EST}\")
+  root.exe -q -b "../macros/runCalibration.cc(\"${FILE}\",${ANCHOR})"
+  root.exe -q -b "../macros/drawSummaryPlots.cc(\"${FILE}\",\"${RUN}\",\"${EST}\")"
 done
