@@ -3,6 +3,7 @@
 *.so
 *.pcm
 *.pdf
+*.png
 *.root
 !basehistos.root
 
