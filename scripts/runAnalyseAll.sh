@@ -19,13 +19,12 @@ for FILE in "${RUN_NUMBERS[@]}"; do
   echo "[Starting processing run: ${FILE}]"
 
 
-#  screen -d -m -L -Logfile logs/log_analysis_${FILE}_FT0C_0.txt ./../scripts/analyse.sh ${FILE} hFT0C_BCs 0
+ screen -d -m -L -Logfile ../logs/log_analysis_${FILE}_FT0C_0.txt ./../scripts/analyse.sh ${FILE} hFT0C_BCs 0
  screen -d -m -L -Logfile ../logs/log_analysis_${FILE}_FT0C_2.txt ./../scripts/analyse.sh ${FILE} hFT0C_BCs 2
-#  screen -d -m -L -Logfile ../logs/log_analysis_${FILE}hFT0MOuterA_Collisions_2.txt ./../scripts/analyse.sh ${FILE} hFT0MOuterA_Collisions 2
-#  screen -d -m -L -Logfile logs/log_analysis_${FILE}_FT0M_2.txt ./../scripts/analyse.sh ${FILE} hFT0M_BCs 2
-#  screen -d -m -L -Logfile logs/log_analysis_${FILE}_FV0A_2.txt ./../scripts/analyse.sh ${FILE} hFV0A_BCs 2
-#  screen -d -m -L -Logfile logs/log_analysis_${FILE}_NMFTTracks_2.txt ./../scripts/analyse.sh ${FILE} hNMFTTracks 2
-#  screen -d -m -L -Logfile logs/log_analysis_${FILE}_NGlobalTracks_2.txt ./../scripts/analyse.sh ${FILE} hNGlobalTracks 2
+ screen -d -m -L -Logfile ../logs/log_analysis_${FILE}_FT0M_2.txt ./../scripts/analyse.sh ${FILE} hFT0M_BCs 2
+ screen -d -m -L -Logfile ../logs/log_analysis_${FILE}_FV0A_2.txt ./../scripts/analyse.sh ${FILE} hFV0A_BCs 2
+ screen -d -m -L -Logfile ../logs/log_analysis_${FILE}_NMFTTracks_2.txt ./../scripts/analyse.sh ${FILE} hNMFTTracks 2
+ screen -d -m -L -Logfile ../logs/log_analysis_${FILE}_NGlobalTracks_2.txt ./../scripts/analyse.sh ${FILE} hNGlobalTracks 2
   sleep 0.1
   let COUNTER=COUNTER+1
 done

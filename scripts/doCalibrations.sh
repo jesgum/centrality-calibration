@@ -4,13 +4,14 @@
 
 echo "Will now run all relevant calibrations"
 
-# FILES=$(ls results/AR_560169_glauberNBD_ancestorMode*_fixedK_fixedMu_hFT0C_BCs.root)
-FILES=$(ls ../results/*.root)
+FILES=$(ls ../results/*glauberNBD_ancestorMode2_fixedK_fixedMu_hFT0C_BCs.root)
+# FILES=$(ls ../results/*glauberNBD*.root)
 
 
 RUN="111111"
 EST="FT0A Amplitude"
-ANCHOR=80
+ANCHOR=90
+GLOBAL_NORM=kTRUE
 
 for FILE in ${FILES}; do
   echo "Processing file ${FILE}"
@@ -24,6 +25,6 @@ for FILE in ${FILES}; do
     EST="$HISTTYPE"
   fi
 
-  root.exe -q -b "../macros/runCalibration.cc(\"${FILE}\",${ANCHOR})"
-  root.exe -q -b "../macros/drawSummaryPlots.cc(\"${FILE}\",\"${RUN}\",\"${EST}\")"
+  root.exe -q -b "../macros/runCalibration.cc(\"${FILE}\",${ANCHOR},${GLOBAL_NORM})"
+  root.exe -q -b "../macros/drawSummaryPlots.cc(\"${FILE}\",\"${RUN}\",\"${EST}\",${GLOBAL_NORM})"
 done

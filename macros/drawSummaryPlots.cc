@@ -55,15 +55,16 @@ Double_t GetBoundaryForPercentile( TH1 *histo, Double_t lPercentileRequested ) {
 
 void drawSummaryPlots( TString lInputFileName = "AnalysisResultsLHC24ar_glauberNBD_ancestorMode2_isCollision0.root",
                          TString lRunNumber = "000000",
-                         TString lXaxisTitle = "FT0C Amplitude"
-                         ){
+                         TString lXaxisTitle = "FT0C Amplitude",
+                         Bool_t lMode = kFALSE){
 
   TFile *file = new TFile(lInputFileName.Data(), "READ");
   file->ls();
 
   TString calibFileName = lInputFileName.Data(); 
   calibFileName.ReplaceAll("glauberNBD", "calibration");
-  
+  const char* mode = lMode ? "_var1" : "";
+  calibFileName.ReplaceAll(".root", Form("%s.root", mode)); 
   TFile *file2 = new TFile(calibFileName.Data(), "READ");
   file2->ls();
   
@@ -341,7 +342,7 @@ void drawSummaryPlots( TString lInputFileName = "AnalysisResultsLHC24ar_glauberN
   
   TString exportName = calibFileName; 
   exportName.ReplaceAll("calibration", "summaryPlot"); 
-  exportName.ReplaceAll(".root", ".pdf"); 
+  exportName.ReplaceAll(".root", Form("%s.pdf", mode)); 
 
   c1->SaveAs(exportName.Data());
 }

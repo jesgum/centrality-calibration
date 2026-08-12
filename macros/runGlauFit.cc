@@ -149,7 +149,7 @@ int runGlauFit(TString lInputFileName = "AnalysisResultsLHC24ar.root", Double_t 
   if(!file) cout<<"Problem with file!"<<endl;
   TH1F *hV0Mfine = 0x0; 
 
-  hV0Mfine = (TH1F *) file -> Get(Form("centrality-study_bc_vtxZ/%s", histogramName.Data()));
+  hV0Mfine = (TH1F *) file -> Get(Form("centrality-study_selectFV0OrA/%s", histogramName.Data()));
 
   // disregard bin zero
   cout<<"Received bin zero content: "<< hV0Mfine ->GetBinContent(0)<<", will set to zero..."<<endl; 
