@@ -18,11 +18,11 @@
 void uploadToCCDB()
 {
   // Settings
-  const char* ccdbPath = "Users/j/jekarlss/Test/Centrality";
   // const char* ccdbPath = "Centrality/Estimators";
-
+  const char* ccdbPath = "Users/j/jekarlss/Test/Centrality";
   const char* author = "Jesper Karlsson Gumprecht";
   const char* description = "LHC26ak pass1-based calib with extra estimators.";
+
   // Data
   const bool uploadFT0C = true;
   const bool uploadFT0Cvar1 = true;
@@ -36,7 +36,7 @@ void uploadToCCDB()
   const bool uploadMonteCarlo = false;
 
   // Upload switches
-  const bool doUploadToCCDB = false;
+  const bool doUploadToCCDB = true;
   const bool doSaveForInspection = true;
 
   // Read run numbers from file
@@ -263,7 +263,6 @@ void uploadToCCDB()
       }
       std::cout << "Finished with upload of run " << runs[ii] << " update! " << std::endl;
     }
-
 
     // save for posterior inspection if required
     if (doSaveForInspection) {
