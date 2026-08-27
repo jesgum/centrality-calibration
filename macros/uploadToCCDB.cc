@@ -28,6 +28,7 @@ void uploadToCCDB()
   const bool uploadFT0Cvar1 = true;
   const bool uploadFT0Cvar2 = true;
   const bool uploadFT0M = true;
+  const bool uploadFT0MOuterA = true;
   const bool uploadFV0A = true;
   const bool uploadNGlo = true;
   const bool uploadNMFT = true;
@@ -36,8 +37,9 @@ void uploadToCCDB()
   const bool uploadMonteCarlo = false;
 
   // Upload switches
-  const bool doUploadToCCDB = true;
+  const bool doUploadToCCDB = false;
   const bool doSaveForInspection = true;
+  const bool overwriteCurrentUpload = true;
 
   // Read run numbers from file
   std::vector<int> runs;
@@ -59,7 +61,7 @@ void uploadToCCDB()
 
   o2::ccdb::CcdbApi ccdb_api;
   ccdb_api.init("https://alice-ccdb.cern.ch");
-  std::map<string, string> metadataRCT, headers;
+  std::map<string, string> metadataRCT, headers, metadataCalib;
   for (size_t ii = 0; ii < runs.size(); ii++) {
     //  Get the desired timestamps from the CCDB, no need to suffer with independent code
     headers = ccdb_api.retrieveHeaders(Form("RCT/Info/RunInformation/%i", runs[ii]), metadataRCT, -1);
@@ -69,6 +71,22 @@ void uploadToCCDB()
     // safety margins
     tsSOR = tsSOR - 300;
     tsEOR = tsEOR + 300;
+
+
+    // Check if file was already uploaded
+    if (!overwriteCurrentUpload) {
+      std::cout << "Attempting to check if calib object was already uploaded..." << std::endl;
+      try {
+        auto calibObject = ccdb_api.retrieveFromTFileAny<TList>(ccdbPath, metadataCalib, (tsSOR + tsEOR) / 2);
+        if (calibObject) {
+          LOG(info) << "Found object for run " << runs[ii];
+          LOG(info) << "Skipping...";
+          continue;
+        }
+      } catch (std::exception const& e) {
+        LOG(info) << "Could not find object";
+      }
+    }
 
     std::cout << "Run " << runs[ii] << " SOR " << tsSOR << " EOR " << tsEOR << std::endl;
 
@@ -86,14 +104,14 @@ void uploadToCCDB()
     TFile* file1 = new TFile(Form("../results/AR_%i_calibration_ancestorMode2_fixedK_fixedMu_hFT0C_BCs.root", runs[ii]), "READ");
     TH1F* hCalibFT0C = (TH1F*)file1->Get("hCalib");
     hCalibFT0C->SetName("hCalibFT0C_input");
-    listHistograms->Add(hCalibFT0C->Clone("hCalibZeqFT0C"));
+    if (uploadFT0C) listHistograms->Add(hCalibFT0C->Clone("hCalibZeqFT0C"));
 
     // Step 2: variant FT0C with no scale-to-fit near AP (matches other estimators for now)
     std::cout << "Adding FT0Cvariant1 for run " << runs[ii] << std::endl;
     TFile* file2 = new TFile(Form("../results/AR_%i_calibration_ancestorMode2_fixedK_fixedMu_hFT0C_BCs_var1.root", runs[ii]), "READ");
     TH1F* hCalibFT0Cvar1 = (TH1F*)file2->Get("hCalib");
     hCalibFT0Cvar1->SetName("hCalibFT0Cvar1_input");
-    listHistograms->Add(hCalibFT0Cvar1->Clone("hCalibZeqFT0Cvar1"));
+    if (uploadFT0Cvar1) listHistograms->Add(hCalibFT0Cvar1->Clone("hCalibZeqFT0Cvar1"));
 
     // Step 2bis: variant FT0C with no scale-to-fit near AP, ancestor mode zero
     std::cout << "Adding FT0Cvariant2 for run " << runs[ii] << std::endl;
@@ -101,28 +119,28 @@ void uploadToCCDB()
     TFile* file2bis = new TFile(Form("../results/AR_%i_calibration_ancestorMode0_fixedK_fixedMu_hFT0C_BCs.root", runs[ii]), "READ");
     TH1F* hCalibFT0Cvar2 = (TH1F*)file2bis->Get("hCalib");
     hCalibFT0Cvar2->SetName("hCalibFT0Cvar2_input");
-    listHistograms->Add(hCalibFT0Cvar2->Clone("hCalibZeqFT0Cvar2"));
+    if (uploadFT0Cvar2) listHistograms->Add(hCalibFT0Cvar2->Clone("hCalibZeqFT0Cvar2"));
 
     // Step 3: FT0M
     std::cout << "Adding FT0 for run " << runs[ii] << std::endl;
     TFile* file3 = new TFile(Form("../results/AR_%i_calibration_ancestorMode2_fixedK_fixedMu_hFT0M_BCs.root", runs[ii]), "READ");
     TH1F* hCalibFT0 = (TH1F*)file3->Get("hCalib");
     hCalibFT0->SetName("hCalibFT0_input");
-    listHistograms->Add(hCalibFT0->Clone("hCalibZeqFT0"));
+    if (uploadFT0M) listHistograms->Add(hCalibFT0->Clone("hCalibZeqFT0"));
 
     // Step 4: FV0A
     std::cout << "Adding FV0A for run " << runs[ii] << std::endl;
     TFile* file4 = new TFile(Form("../results/AR_%i_calibration_ancestorMode2_fixedK_fixedMu_hFV0A_BCs.root", runs[ii]), "READ");
     TH1F* hCalibFV0A = (TH1F*)file4->Get("hCalib");
     hCalibFV0A->SetName("hCalibFV0A_input");
-    listHistograms->Add(hCalibFV0A->Clone("hCalibZeqFV0"));
+    if (uploadFV0A) listHistograms->Add(hCalibFV0A->Clone("hCalibZeqFV0"));
 
     // Step 5: NGlobal
     std::cout << "Adding NGlobal for run " << runs[ii] << std::endl;
     TFile* file5 = new TFile(Form("../results/AR_%i_calibration_ancestorMode2_fixedK_fixedMu_hNGlobalTracks.root", runs[ii]), "READ");
     TH1F* hCalibNGlobal = (TH1F*)file5->Get("hCalib");
     hCalibNGlobal->SetName("hCalibNGlobal_input");
-    listHistograms->Add(hCalibNGlobal->Clone("hCalibZeqNGlobal"));
+    if (uploadNGlo) listHistograms->Add(hCalibNGlobal->Clone("hCalibZeqNGlobal"));
 
     // Step 6: MFT
     std::cout << "Adding MFT for run " << runs[ii] << std::endl;
@@ -130,10 +148,17 @@ void uploadToCCDB()
     TH1F* hCalibMFT = (TH1F*)file6->Get("hCalib");
     if (hCalibMFT) {
       hCalibMFT->SetName("hCalibMFT_input");
-      listHistograms->Add(hCalibMFT->Clone("hCalibZeqMFT"));
+      if (uploadNMFT) listHistograms->Add(hCalibMFT->Clone("hCalibZeqMFT"));
     } else {
       std::cout << "MFT does not exist for run " << runs[ii] << ", skipping..." << std::endl;
     }
+
+    // Step 7: FT0MOuterA
+    std::cout << "Adding FT0MOuterA for run " << runs[ii] << std::endl;
+    TFile* file7 = new TFile(Form("../results/AR_%i_calibration_ancestorMode2_fixedK_fixedMu_hFT0MOuterA_BCs.root", runs[ii]), "READ");
+    TH1F* hCalibFT0MOuterA = (TH1F*)file7->Get("hCalib");
+    hCalibFT0MOuterA->SetName("hCalibFT0MOuterA_input");
+    if (uploadFT0MOuterA) listHistograms->Add(hCalibFT0MOuterA->Clone("hCalibZeqFT0MOuterA"));
 
     // Step 1b: add mc calibration as well
     std::cout << "Adding Monte Carlo calibration for run " << runs[ii] << std::endl;
@@ -287,6 +312,11 @@ void uploadToCCDB()
   std::cout << "  - FV0A....: " << uploadFV0A << std::endl;
   std::cout << "  - NGlo....: " << uploadNGlo << std::endl;
   std::cout << "  - NMFT....: " << uploadNMFT << std::endl;
+  std::cout << std::endl;
+  std::cout << "Switches:" << std::endl;
+  std::cout << "  - UploadToCCDB............: " << doUploadToCCDB << std::endl;
+  std::cout << "  - SaveForInspection.......: " << doSaveForInspection << std::endl;
+  std::cout << "  - OvererwriteCurrentUpload: " << overwriteCurrentUpload << std::endl;
   std::cout << std::endl;
   std::cout << "Done!" << std::endl;
 }
