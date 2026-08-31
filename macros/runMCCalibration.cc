@@ -195,11 +195,10 @@ void runMCCalibration(TString estimator = "FT0M" , TString histogramName = "hFT0
     f1scale->Write();
     mcCalibFile->Write();
     mcCalibFile->Close();
-
+    fileData->Close();
+    fileMC->Close();
   }
   
-  fileData->Close();
-  fileMC->Close();
   
   cout<<"n runs "<<nRuns<<" data files "<<dataFiles<<" MC files "<<mcFiles<<endl;
   
