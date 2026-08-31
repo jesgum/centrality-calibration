@@ -23,9 +23,9 @@ Double_t GetBoundaryForPercentile( TH1 *histo, Double_t lPercentileRequested ) {
   return lReturnValue;
 }
 
-void runMCCalibration(TString estimator = "FT0C" , TString histogramName = "hFT0C_Collisions"){
-  const char* name2DHist = "FT0C";
-  int runs[] = {564374};
+void runMCCalibration(TString estimator = "FT0M" , TString histogramName = "hFT0C_Collisions"){
+  const char* name2DHist = "FT0M";
+  int runs[] = {564373,564359,564356};
   const int nRuns = sizeof(runs)/sizeof(int);
   cout<<"Processing "<<nRuns<<" runs..."<<endl;
   
@@ -48,19 +48,19 @@ void runMCCalibration(TString estimator = "FT0C" , TString histogramName = "hFT0
   int dataFiles = 0;
   int mcFiles = 0;
   
-  TString filenameData = "/home/jesgum/alice/centrality-calibration/FT0Mvar3/AnalysisResults_Data.root";
-  TString filenameMC = "/home/jesgum/alice/centrality-calibration/FT0Mvar3/AnalysisResults_Mc.root";
-  TFile *fileData = new TFile(filenameData.Data(), "READ");
-  TFile *fileMC = new TFile(filenameMC.Data(), "READ");
-  
-  if (!fileData || fileData->IsZombie() || fileData == nullptr) {
-    cout<<"PROBLEM with fileData"<<endl;
-  }
-  if (!fileMC || fileMC->IsZombie() || fileMC == nullptr) {
-    cout<<"PROBLEM with fileMC"<<endl;
-  }
-
   for(int ii=0; ii<nRuns; ii++){
+    TString filenameData = Form("../ARs_data/AR_%d.root", runs[ii]);
+    TString filenameMC = Form("../ARs_mc/AR_%d.root", runs[ii]);
+    TFile *fileData = new TFile(filenameData.Data(), "READ");
+    TFile *fileMC = new TFile(filenameMC.Data(), "READ");
+    
+    if (!fileData || fileData->IsZombie() || fileData == nullptr) {
+      cout<<"PROBLEM with fileData"<<endl;
+    }
+    if (!fileMC || fileMC->IsZombie() || fileMC == nullptr) {
+      cout<<"PROBLEM with fileMC"<<endl;
+    }
+
     int runNumber = runs[ii];
     cout<<"Run: "<<runNumber<<endl;
     bool goodToGo = true;
